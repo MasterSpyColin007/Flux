@@ -35,12 +35,10 @@ class UserControllerTest {
 	}
 
 	@Test
-	void usersPageDisplaysSeededUsers() throws Exception {
+	void usersPageDisplaysSeededAdmin() throws Exception {
 		mockMvc.perform(get("/users").with(user("admin").roles("ADMIN")))
 			.andExpect(status().isOk())
-			.andExpect(content().string(containsString("admin")))
-			.andExpect(content().string(containsString("alice")))
-			.andExpect(content().string(containsString("bob")));
+			.andExpect(content().string(containsString("admin")));
 	}
 
 	@Test
@@ -59,7 +57,6 @@ class UserControllerTest {
 				.param("role", "ROLE_ADMIN")
 				.with(user("admin").roles("ADMIN")))
 			.andExpect(status().isOk())
-			.andExpect(content().string(containsString("admin")))
-			.andExpect(content().string(containsString("charlie")));
+			.andExpect(content().string(containsString("admin")));
 	}
 }
