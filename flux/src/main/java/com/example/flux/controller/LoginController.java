@@ -11,12 +11,16 @@ public class LoginController {
 	@GetMapping("/login")
 	public String login(@RequestParam(value = "error", required = false) String error,
 						@RequestParam(value = "logout", required = false) String logout,
+						@RequestParam(value = "registered", required = false) String registered,
 						Model model) {
 		if (error != null) {
 			model.addAttribute("error", "Invalid username or password.");
 		}
 		if (logout != null) {
 			model.addAttribute("logout", "You have been logged out.");
+		}
+		if (registered != null) {
+			model.addAttribute("registered", "Account created successfully. Please sign in.");
 		}
 		return "login";
 	}

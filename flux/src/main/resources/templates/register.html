@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flux - Sign In</title>
+    <title>Flux - Create Account</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -14,7 +14,7 @@
             align-items: center;
             min-height: 100vh;
         }
-        .login-card {
+        .register-card {
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -24,9 +24,15 @@
         }
         h1 {
             font-size: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.25rem;
             text-align: center;
             color: #333;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
         }
         .alert {
             padding: 0.75rem 1rem;
@@ -38,11 +44,6 @@
             background: #fef2f2;
             color: #991b1b;
             border: 1px solid #fecaca;
-        }
-        .alert-success {
-            background: #f0fdf4;
-            color: #166534;
-            border: 1px solid #bbf7d0;
         }
         label {
             display: block;
@@ -79,43 +80,39 @@
             transition: background 0.15s;
         }
         button:hover { background: #1d4ed8; }
-        .register-link {
+        .login-link {
             text-align: center;
             margin-top: 1rem;
             font-size: 0.85rem;
             color: #64748b;
         }
-        .register-link a { color: #2563eb; text-decoration: none; }
-        .register-link a:hover { text-decoration: underline; }
+        .login-link a { color: #2563eb; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="login-card">
+    <div class="register-card">
         <h1>Flux</h1>
+        <p class="subtitle">Create your account</p>
 
         <div th:if="${error}" class="alert alert-error" role="alert">
             <span th:text="${error}">Error message</span>
         </div>
 
-        <div th:if="${logout}" class="alert alert-success" role="alert">
-            <span th:text="${logout}">Logout message</span>
-        </div>
-
-        <div th:if="${registered}" class="alert alert-success" role="alert">
-            <span th:text="${registered}">Registration message</span>
-        </div>
-
-        <form th:action="@{/login}" method="post">
+        <form th:action="@{/register}" method="post">
             <label for="username">Username</label>
-            <input type="text" id="username" name="username" placeholder="Enter username" required autofocus>
+            <input type="text" id="username" name="username" th:value="${username}" placeholder="At least 3 characters" required autofocus>
 
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter password" required>
+            <input type="password" id="password" name="password" placeholder="At least 6 characters" required>
 
-            <button type="submit">Sign in</button>
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required>
+
+            <button type="submit">Create account</button>
         </form>
 
-        <p class="register-link">Don't have an account? <a th:href="@{/register}">Create one</a></p>
+        <p class="login-link">Already have an account? <a th:href="@{/login}">Sign in</a></p>
     </div>
 </body>
 </html>
