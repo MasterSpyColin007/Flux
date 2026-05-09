@@ -67,6 +67,7 @@
         <span class="brand">Flux</span>
         <div class="nav-links">
             <a th:href="@{/}" class="active">Home</a>
+            <a th:href="@{/posts}">Posts</a>
             <a th:href="@{/users}" sec:authorize="hasRole('ADMIN')">Admin</a>
             <span class="user-info">Signed in as <strong sec:authentication="name">user</strong></span>
             <form th:action="@{/logout}" method="post">
@@ -79,6 +80,7 @@
         <div class="card">
             <h1>Welcome to Flux</h1>
             <p>You are signed in as <strong sec:authentication="name">user</strong>.</p>
+            <a th:href="@{/posts}" class="btn">View Posts</a>
             <a th:href="@{/users}" class="btn" sec:authorize="hasRole('ADMIN')">Admin Dashboard</a>
         </div>
     </div>

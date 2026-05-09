@@ -75,6 +75,10 @@ public class UserController {
 		}
 
 		if ("ROLE_ADMIN".equals(user.getRole())) {
+			if (userRepository.countByRole("ROLE_ADMIN") <= 1) {
+				redirectAttributes.addFlashAttribute("error", "At least one admin account must remain.");
+				return "redirect:/users";
+			}
 			user.setRole("ROLE_USER");
 			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is no longer an admin.");
 		} else {
@@ -96,6 +100,11 @@ public class UserController {
 
 		if (user.getUsername().equals(principal.getName())) {
 			redirectAttributes.addFlashAttribute("error", "You cannot delete your own account.");
+			return "redirect:/users";
+		}
+
+		if ("ROLE_ADMIN".equals(user.getRole()) && userRepository.countByRole("ROLE_ADMIN") <= 1) {
+			redirectAttributes.addFlashAttribute("error", "At least one admin account must remain.");
 			return "redirect:/users";
 		}
 
