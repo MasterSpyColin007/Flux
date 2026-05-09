@@ -6,6 +6,8 @@ import com.example.flux.repository.PostRepository;
 import com.example.flux.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @Service
@@ -87,6 +89,17 @@ public class PostService {
 		if (imageUrl == null || imageUrl.isBlank()) {
 			return null;
 		}
-		return imageUrl.trim();
+		String trimmedImageUrl = imageUrl.trim();
+		try {
+			URI uri = new URI(trimmedImageUrl);
+			String scheme = uri.getScheme();
+			if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))
+					|| uri.getHost() == null) {
+				throw new IllegalArgumentException("Image URL must be an externally hosted http or https URL.");
+			}
+			return trimmedImageUrl;
+		} catch (URISyntaxException ex) {
+			throw new IllegalArgumentException("Image URL must be an externally hosted http or https URL.");
+		}
 	}
 }

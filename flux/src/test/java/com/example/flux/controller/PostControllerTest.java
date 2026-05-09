@@ -11,6 +11,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,12 +71,14 @@ class PostControllerTest {
 		older.setAuthor(author);
 		older.setTitle("Older");
 		older.setContent("Older post");
+		older.setCreatedAt(LocalDateTime.now().minusDays(1));
 		postRepository.save(older);
 
 		Post newer = new Post();
 		newer.setAuthor(author);
 		newer.setTitle("Newer");
 		newer.setContent("Newer post");
+		newer.setCreatedAt(LocalDateTime.now());
 		postRepository.save(newer);
 
 		mockMvc.perform(get("/api/posts").with(user("feedauthor").roles("USER")))
@@ -100,6 +104,25 @@ class PostControllerTest {
 
 		assertTrue(postRepository.findAll().stream()
 			.noneMatch(post -> "This should not save.".equals(post.getContent())));
+	}
+
+	@Test
+	void rejectsImageUrlThatIsNotExternallyHosted() throws Exception {
+		saveAuthor("badimageauthor", "badimageauthor@example.com");
+
+		mockMvc.perform(post("/api/posts")
+				.with(user("badimageauthor").roles("USER"))
+				.with(csrf())
+				.contentType("application/json")
+				.content("""
+					{
+					  "author": "badimageauthor@example.com",
+					  "content": "This image URL should fail.",
+					  "imageUrl": "/uploads/local.png"
+					}
+					"""))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("Image URL must be an externally hosted http or https URL."));
 	}
 
 	private User saveAuthor(String username, String email) {
