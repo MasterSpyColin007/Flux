@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; }
+        header { background: white; padding: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+        nav a { margin: 0 15px; text-decoration: none; color: #333; }
+        .feed { max-width: 600px; margin: 20px auto; }
+        .post { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .post-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .post-author { font-weight: bold; }
+        .post-content { margin: 10px 0; }
+        .post-actions { display: flex; gap: 20px; margin-top: 10px; }
+        .btn { padding: 8px 16px; background: #0a66c2; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #084399; }
+        .btn-secondary { background: #e4e6eb; color: #333; }
+        .btn-secondary:hover { background: #d0d2d7; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <h1>Flux</h1>
+                <div>
+                    <a href="/">Home</a>
+                    <a href="/explore">Explore</a>
+                    <sec:authorize access="isAuthenticated()">
+                        <a href="/profile">My Profile</a>
+                        <a href="/posts/create">Create Post</a>
+                        <a href="/logout">Logout</a>
+                    </sec:authorize>
+                    <sec:authorize access="!isAuthenticated()">
+                        <a href="/auth/login">Login</a>
+                        <a href="/auth/register">Register</a>
+                    </sec:authorize>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="feed" th:if="${authenticated}">
+            <h2>Your Feed</h2>
+            <div th:each="post : ${posts}" class="post">
+                <div class="post-header">
+                    <span class="post-author" th:text="${post.author.username}">Author</span>
+                    <span th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">Date</span>
+                </div>
+                <div class="post-content" th:text="${post.content}">Post content</div>
+                <div class="post-actions">
+                    <a th:href="@{/posts/{id}(id=${post.id})}" class="btn">View</a>
+                    <button class="btn btn-secondary">Like</button>
+                    <button class="btn btn-secondary">Comment</button>
+                </div>
+            </div>
+        </div>
+        
+        <div th:if="!${authenticated}" style="text-align: center; padding: 40px;">
+            <h2>Welcome to Flux</h2>
+            <p>Join our social media community today!</p>
+            <a href="/auth/login" class="btn" style="margin: 10px;">Login</a>
+            <a href="/auth/register" class="btn" style="margin: 10px;">Register</a>
+        </div>
+
+        <div th:if="${error}" style="background: #f8d7da; padding: 15px; border-radius: 4px; margin: 20px 0; color: #721c24;">
+            <span th:text="${error}">Error message</span>
+        </div>
+    </div>
+</body>
+</html>
