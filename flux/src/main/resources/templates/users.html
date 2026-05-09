@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flux - Users</title>
+    <title>Flux - Admin</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -33,13 +33,38 @@
         }
         nav button:hover { border-color: #94a3b8; color: #fff; }
 
-        .container { max-width: 960px; margin: 1.5rem auto; padding: 0 1rem; }
+        .container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .page-header h1 { font-size: 1.5rem; color: #1e293b; }
+        .page-header p { color: #64748b; font-size: 0.875rem; margin-top: 0.25rem; }
+        .api-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .api-link {
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            padding: 0.4rem 0.65rem;
+            font-size: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
 
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         .stat-card {
             background: #fff;
@@ -50,6 +75,43 @@
         }
         .stat-card .number { font-size: 1.75rem; font-weight: 700; color: #2563eb; }
         .stat-card .label { font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; }
+        .database-panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+        }
+        .panel-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .panel-heading h2 { font-size: 1rem; color: #1e293b; }
+        .panel-heading span { font-size: 0.75rem; color: #64748b; }
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+        .db-table {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.75rem;
+            background: #f8fafc;
+        }
+        .db-table strong { display: block; color: #1e293b; margin-bottom: 0.25rem; }
+        .db-table span { color: #64748b; font-size: 0.8rem; }
+        .db-table a {
+            display: inline-block;
+            margin-top: 0.5rem;
+            color: #2563eb;
+            font-size: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
 
         .toolbar {
             display: flex;
@@ -153,6 +215,15 @@
         }
         .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        @media (max-width: 760px) {
+            nav { align-items: flex-start; gap: 0.75rem; flex-direction: column; }
+            nav .nav-links { flex-wrap: wrap; gap: 0.75rem; }
+            .page-header { align-items: flex-start; flex-direction: column; }
+            .api-links { justify-content: flex-start; }
+            .stats { grid-template-columns: 1fr; }
+            .table-card { overflow-x: auto; }
+            table { min-width: 760px; }
+        }
     </style>
 </head>
 <body>
@@ -160,7 +231,7 @@
         <span class="brand">Flux</span>
         <div class="nav-links">
             <a th:href="@{/}">Home</a>
-            <a th:href="@{/users}" class="active">Users</a>
+            <a th:href="@{/users}" class="active">Admin</a>
             <span class="user-info">Signed in as <strong sec:authentication="name">user</strong></span>
             <form th:action="@{/logout}" method="post">
                 <button type="submit">Sign out</button>
@@ -171,6 +242,17 @@
     <div class="container">
         <div th:if="${error}" class="alert alert-error" role="alert" th:text="${error}"></div>
         <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+
+        <div class="page-header">
+            <div>
+                <h1>Admin Dashboard</h1>
+                <p>Manage users and inspect database tables from one admin-only view.</p>
+            </div>
+            <div class="api-links">
+                <a class="api-link" th:href="@{/api/database/tables}">GET /api/database/tables</a>
+                <a class="api-link" th:href="@{/api/database}">GET /api/database</a>
+            </div>
+        </div>
 
         <div class="stats">
             <div class="stat-card">
@@ -187,8 +269,25 @@
             </div>
         </div>
 
+        <section class="database-panel">
+            <div class="panel-heading">
+                <h2>Database Tables</h2>
+                <span th:text="${#lists.size(tableSummaries)} + ' tables visible'">0 tables visible</span>
+            </div>
+            <div class="table-grid" th:if="${!tableSummaries.isEmpty()}">
+                <div class="db-table" th:each="table : ${tableSummaries}">
+                    <strong th:text="${table.name()}">users</strong>
+                    <span th:text="${table.rowCount()} + ' rows'">0 rows</span>
+                    <a th:href="@{/api/database/tables/{tableName}(tableName=${table.name()})}">GET rows</a>
+                </div>
+            </div>
+            <div th:if="${tableSummaries.isEmpty()}" class="empty-state">
+                No database tables found.
+            </div>
+        </section>
+
         <div class="toolbar">
-            <h2>User Directory</h2>
+            <h2>User Management</h2>
             <div class="filter-group">
                 <a th:href="@{/users(sort=${currentSort}, dir=${currentDir})}"
                    th:classappend="${currentRole == null} ? ' active' : ''"

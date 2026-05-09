@@ -43,7 +43,14 @@ class UserControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(view().name("users"))
 			.andExpect(model().attributeExists("users"))
-			.andExpect(model().attributeExists("totalUsers"));
+			.andExpect(model().attributeExists("totalUsers"))
+			.andExpect(model().attributeExists("tableSummaries"));
+	}
+
+	@Test
+	void usersPageRequiresAdminRole() throws Exception {
+		mockMvc.perform(get("/users").with(user("regularuser").roles("USER")))
+			.andExpect(status().isForbidden());
 	}
 
 	@Test
@@ -61,6 +68,15 @@ class UserControllerTest {
 				.with(user("admin").roles("ADMIN")))
 			.andExpect(status().isOk())
 			.andExpect(model().attributeExists("users"));
+	}
+
+	@Test
+	void usersPageFallsBackForUnknownSort() throws Exception {
+		mockMvc.perform(get("/users")
+				.param("sort", "missing")
+				.with(user("admin").roles("ADMIN")))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("currentSort", "username"));
 	}
 
 	@Test
@@ -133,5 +149,32 @@ class UserControllerTest {
 				.with(user("regularuser").roles("USER"))
 				.with(csrf()))
 			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	void databaseApiRequiresAdminRole() throws Exception {
+		mockMvc.perform(get("/api/database/tables").with(user("regularuser").roles("USER")))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	void adminCanListDatabaseTables() throws Exception {
+		mockMvc.perform(get("/api/database/tables").with(user("admin").roles("ADMIN")))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[?(@.name == 'USERS' || @.name == 'users')]").exists());
+	}
+
+	@Test
+	void adminCanGetRowsFromKnownTable() throws Exception {
+		mockMvc.perform(get("/api/database/tables/users").with(user("admin").roles("ADMIN")))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[0].USERNAME").value("admin"));
+	}
+
+	@Test
+	void unknownTableReturnsBadRequest() throws Exception {
+		mockMvc.perform(get("/api/database/tables/not_a_table").with(user("admin").roles("ADMIN")))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("Unknown database table: not_a_table"));
 	}
 }

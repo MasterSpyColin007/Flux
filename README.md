@@ -36,9 +36,22 @@ Custom login page at `/login` with:
 
 Authenticated users are greeted at `/` with a welcome page that displays their username and a sign-out button.
 
+### Admin Dashboard
+
+Admins can visit `/users` to manage users and inspect the database. The dashboard shows user totals, table names, table row counts, and links to database GET endpoints.
+
+### Database GET API
+
+Admin-only database endpoints are available for read-only inspection:
+
+- `GET /api/database/tables` lists visible tables and row counts
+- `GET /api/database/tables/{tableName}` returns every row from one known table
+- `GET /api/database` returns every row from every visible table
+
 ### Security Configuration
 
-- `/login` and `/css/**` are publicly accessible
+- `/login`, `/register`, and `/css/**` are publicly accessible
+- `/users` and `/api/database/**` require `ROLE_ADMIN`
 - All other routes require authentication
 - Successful login redirects to `/`
 - Failed login redirects to `/login?error=true`
