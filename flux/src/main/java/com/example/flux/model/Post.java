@@ -26,6 +26,7 @@ public class Post {
 	@Column(nullable = false, length = 2000)
 	private String content;
 
+	// Flux stores references to externally hosted images; it does not store image files.
 	@Column(name = "image_url")
 	private String imageUrl;
 
