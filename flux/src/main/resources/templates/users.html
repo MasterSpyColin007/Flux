@@ -125,6 +125,34 @@
             text-align: center;
             color: #94a3b8;
         }
+        .actions { display: flex; gap: 0.375rem; }
+        .actions form { display: inline; }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #fff;
+            color: #374151;
+        }
+        .btn-sm:hover { border-color: #2563eb; color: #2563eb; }
+        .btn-promote { border-color: #2563eb; color: #2563eb; }
+        .btn-promote:hover { background: #2563eb; color: #fff; }
+        .btn-demote { border-color: #f59e0b; color: #b45309; }
+        .btn-demote:hover { background: #f59e0b; color: #fff; }
+        .btn-delete { border-color: #ef4444; color: #dc2626; }
+        .btn-delete:hover { background: #ef4444; color: #fff; }
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
     </style>
 </head>
 <body>
@@ -141,6 +169,9 @@
     </nav>
 
     <div class="container">
+        <div th:if="${error}" class="alert alert-error" role="alert" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+
         <div class="stats">
             <div class="stat-card">
                 <div class="number" th:text="${totalUsers}">0</div>
@@ -199,6 +230,7 @@
                                 Status <span th:if="${currentSort == 'enabled'}" th:text="${currentDir == 'asc' ? '▲' : '▼'}"></span>
                             </a>
                         </th>
+                        <th sec:authorize="hasRole('ADMIN')">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -212,6 +244,19 @@
                         <td>
                             <span th:if="${user.enabled}" class="badge badge-enabled">Active</span>
                             <span th:unless="${user.enabled}" class="badge badge-disabled">Disabled</span>
+                        </td>
+                        <td sec:authorize="hasRole('ADMIN')">
+                            <div class="actions" th:if="${user.username != #authentication.name}">
+                                <form th:action="@{/users/{id}/toggle-admin(id=${user.id})}" method="post">
+                                    <button type="submit"
+                                            th:class="${user.role == 'ROLE_ADMIN'} ? 'btn-sm btn-demote' : 'btn-sm btn-promote'"
+                                            th:text="${user.role == 'ROLE_ADMIN'} ? 'Demote' : 'Make Admin'">Toggle</button>
+                                </form>
+                                <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post"
+                                      onsubmit="return confirm('Are you sure you want to remove this user?');">
+                                    <button type="submit" class="btn-sm btn-delete">Remove</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

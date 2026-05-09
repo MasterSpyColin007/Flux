@@ -6,8 +6,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -46,5 +50,49 @@ public class UserController {
 		model.addAttribute("currentRole", role);
 
 		return "users";
+	}
+
+	@PostMapping("/users/{id}/toggle-admin")
+	public String toggleAdmin(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
+		User user = userRepository.findById(id).orElse(null);
+		if (user == null) {
+			redirectAttributes.addFlashAttribute("error", "User not found.");
+			return "redirect:/users";
+		}
+
+		if (user.getUsername().equals(principal.getName())) {
+			redirectAttributes.addFlashAttribute("error", "You cannot change your own role.");
+			return "redirect:/users";
+		}
+
+		if ("ROLE_ADMIN".equals(user.getRole())) {
+			user.setRole("ROLE_USER");
+			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is no longer an admin.");
+		} else {
+			user.setRole("ROLE_ADMIN");
+			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is now an admin.");
+		}
+		userRepository.save(user);
+
+		return "redirect:/users";
+	}
+
+	@PostMapping("/users/{id}/delete")
+	public String deleteUser(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
+		User user = userRepository.findById(id).orElse(null);
+		if (user == null) {
+			redirectAttributes.addFlashAttribute("error", "User not found.");
+			return "redirect:/users";
+		}
+
+		if (user.getUsername().equals(principal.getName())) {
+			redirectAttributes.addFlashAttribute("error", "You cannot delete your own account.");
+			return "redirect:/users";
+		}
+
+		userRepository.delete(user);
+		redirectAttributes.addFlashAttribute("success", user.getUsername() + " has been removed.");
+
+		return "redirect:/users";
 	}
 }
