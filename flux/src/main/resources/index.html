@@ -54,6 +54,7 @@
                     <span th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">Date</span>
                 </div>
                 <div class="post-content" th:text="${post.content}">Post content</div>
+                <img th:if="${post.imageUrl}" th:src="${post.imageUrl}" alt="Post image" style="width: 100%; border-radius: 6px; margin: 10px 0;">
                 <div class="post-actions">
                     <a th:href="@{/posts/{id}(id=${post.id})}" class="btn">View</a>
                     <button class="btn btn-secondary">Like</button>

@@ -48,6 +48,10 @@ Admin-only database endpoints are available for read-only inspection:
 - `GET /api/database/tables/{tableName}` returns every row from one known table
 - `GET /api/database` returns every row from every visible table
 
+### Post API
+
+Authenticated users can create and read posts through `/api/posts`. Posts support text content plus an optional `imageUrl`, and are stored with an author and creation timestamp.
+
 ### Security Configuration
 
 - `/login`, `/register`, and `/css/**` are publicly accessible
