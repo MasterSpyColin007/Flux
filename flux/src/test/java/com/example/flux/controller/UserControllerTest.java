@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -136,6 +137,48 @@ class UserControllerTest {
 				.with(csrf()))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(flash().attributeExists("error"));
+	}
+
+	@Test
+	@Transactional
+	void cannotDemoteLastAdmin() throws Exception {
+		User target = userRepository.save(new User("lastadmindemote", passwordEncoder.encode("pass123"), "ROLE_ADMIN"));
+		userRepository.findAll().stream()
+			.filter(user -> !user.getId().equals(target.getId()))
+			.filter(user -> "ROLE_ADMIN".equals(user.getRole()))
+			.forEach(user -> {
+				user.setRole("ROLE_USER");
+				userRepository.save(user);
+			});
+
+		mockMvc.perform(post("/users/" + target.getId() + "/toggle-admin")
+				.with(user("outsideadmin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(flash().attribute("error", "At least one admin account must remain."));
+
+		assertEquals("ROLE_ADMIN", userRepository.findById(target.getId()).get().getRole());
+	}
+
+	@Test
+	@Transactional
+	void cannotDeleteLastAdmin() throws Exception {
+		User target = userRepository.save(new User("lastadmindelete", passwordEncoder.encode("pass123"), "ROLE_ADMIN"));
+		userRepository.findAll().stream()
+			.filter(user -> !user.getId().equals(target.getId()))
+			.filter(user -> "ROLE_ADMIN".equals(user.getRole()))
+			.forEach(user -> {
+				user.setRole("ROLE_USER");
+				userRepository.save(user);
+			});
+
+		mockMvc.perform(post("/users/" + target.getId() + "/delete")
+				.with(user("outsideadmin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(flash().attribute("error", "At least one admin account must remain."));
+
+		assertTrue(userRepository.findById(target.getId()).isPresent());
 	}
 
 	@Test

@@ -52,6 +52,16 @@ Admin-only database endpoints are available for read-only inspection:
 
 Authenticated users can create and read posts through `/api/posts`. Posts support text content plus an optional `imageUrl`, and are stored with an author and creation timestamp. Flux stores image URLs only; image files must already be hosted externally, such as on a CDN or image hosting service.
 
+### Post Pages
+
+Authenticated users can manage posts from the browser:
+
+- `GET /posts` lists posts
+- `GET /posts/create` creates a post
+- `GET /posts/{id}` views a post
+- `GET /posts/{id}/edit` updates a post
+- `GET /posts/{id}/delete` confirms deletion
+
 ### Security Configuration
 
 - `/login`, `/register`, and `/css/**` are publicly accessible
