@@ -28,6 +28,9 @@ public class User {
 	@Column(nullable = false)
 	private String role = "ROLE_USER";
 
+	@Column(nullable = false)
+	private boolean darkMode = false;
+
 	public User() {}
 
 	public User(String username, String password, String role) {
@@ -56,4 +59,7 @@ public class User {
 
 	public String getRole() { return role; }
 	public void setRole(String role) { this.role = role; }
+
+	public boolean isDarkMode() { return darkMode; }
+	public void setDarkMode(boolean darkMode) { this.darkMode = darkMode; }
 }

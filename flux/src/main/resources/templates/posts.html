@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flux - Posts</title>
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
@@ -36,13 +37,14 @@
         @media (max-width: 700px) { nav { align-items: flex-start; flex-direction: column; gap: 0.75rem; } nav .nav-links, .page-header { flex-wrap: wrap; } }
     </style>
 </head>
-<body>
+<body th:classappend="${darkMode} ? 'dark-mode' : ''">
     <nav>
         <span class="brand">Flux</span>
         <div class="nav-links">
             <a th:href="@{/}">Home</a>
             <a th:href="@{/posts}" class="active">Posts</a>
             <a th:href="@{/users}" sec:authorize="hasRole('ADMIN')">Admin</a>
+            <form class="theme-toggle" th:action="@{/theme/toggle}" method="post"><button type="submit" th:text="${darkMode} ? 'Light mode' : 'Dark mode'">Dark mode</button></form>
             <form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form>
         </div>
     </nav>
@@ -58,7 +60,7 @@
                 <img th:if="${post.imageUrl}" class="post-media" th:src="${post.imageUrl}" alt="Post image">
                 <div class="post-body">
                     <div class="post-meta">
-                        <span th:text="${post.author.username}">author</span>
+                        <span>Posted by <strong th:text="${post.author.username}">author</strong></span>
                         <span th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy h:mm a')}">date</span>
                     </div>
                     <h2 class="post-title" th:text="${post.title}">Post title</h2>

@@ -44,6 +44,11 @@ public class UserService {
 			.orElseThrow(() -> new IllegalArgumentException("User not found."));
 	}
 
+	public User getUserByUsername(String username) {
+		return userRepository.findByUsername(username)
+			.orElseThrow(() -> new IllegalArgumentException("User not found."));
+	}
+
 	public List<User> getAllUsers() {
 		return userRepository.findAll();
 	}
@@ -56,6 +61,13 @@ public class UserService {
 		if (bio != null) {
 			user.setBio(bio.trim());
 		}
+		return userRepository.save(user);
+	}
+
+	public User setDarkMode(String username, boolean darkMode) {
+		User user = userRepository.findByUsername(username)
+			.orElseThrow(() -> new IllegalArgumentException("User not found."));
+		user.setDarkMode(darkMode);
 		return userRepository.save(user);
 	}
 

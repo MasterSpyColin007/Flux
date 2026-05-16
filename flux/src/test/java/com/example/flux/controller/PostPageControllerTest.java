@@ -2,6 +2,7 @@ package com.example.flux.controller;
 
 import com.example.flux.model.Post;
 import com.example.flux.model.User;
+import com.example.flux.repository.PostCommentRepository;
 import com.example.flux.repository.PostRepository;
 import com.example.flux.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class PostPageControllerTest {
 
 	@Autowired
 	private PostRepository postRepository;
+
+	@Autowired
+	private PostCommentRepository postCommentRepository;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -140,6 +144,48 @@ class PostPageControllerTest {
 			.andExpect(redirectedUrl("/posts"));
 
 		assertFalse(postRepository.findById(post.getId()).isPresent());
+	}
+
+	@Test
+	void usersCanCommentAndReplyWithAccountNamesVisible() throws Exception {
+		User author = saveAuthor("commentpostauthor", "commentpostauthor@example.com");
+		saveAuthor("commenter", "commenter@example.com");
+		saveAuthor("replier", "replier@example.com");
+		Post post = new Post();
+		post.setAuthor(author);
+		post.setTitle("Commentable post");
+		post.setContent("Original post body");
+		postRepository.save(post);
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments")
+				.with(user("commenter").roles("USER"))
+				.with(csrf())
+				.param("content", "First comment"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/posts/" + post.getId()));
+
+		mockMvc.perform(get("/posts/" + post.getId()).with(user("commenter").roles("USER")))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("Originally posted by")))
+			.andExpect(content().string(containsString("commentpostauthor")))
+			.andExpect(content().string(containsString("commenter")))
+			.andExpect(content().string(containsString("First comment")));
+
+		Long commentId = postCommentRepository.findByPostIdAndParentIsNullOrderByCreatedAtAsc(post.getId())
+			.get(0)
+			.getId();
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments/" + commentId + "/replies")
+				.with(user("replier").roles("USER"))
+				.with(csrf())
+				.param("content", "Reply text"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/posts/" + post.getId()));
+
+		mockMvc.perform(get("/posts/" + post.getId()).with(user("replier").roles("USER")))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("replier")))
+			.andExpect(content().string(containsString("Reply text")));
 	}
 
 	private User saveAuthor(String username, String email) {
