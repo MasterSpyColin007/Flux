@@ -40,6 +40,9 @@
         .comment-meta { color: #64748b; font-size: 0.8rem; margin-bottom: 0.35rem; }
         .comment-author { color: #1e293b; font-weight: 700; }
         .comment-content { white-space: pre-wrap; line-height: 1.5; margin-bottom: 0.5rem; }
+        .comment-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+        .comment-edit-form { margin-top: 0.5rem; }
+        .comment-edit-form textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.55rem; font: inherit; margin-bottom: 0.5rem; }
         .reply-form { margin-top: 0.5rem; }
         .reply-form textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.55rem; font: inherit; margin-bottom: 0.5rem; }
         @media (max-width: 700px) { nav { align-items: flex-start; flex-direction: column; gap: 0.75rem; } nav .nav-links { flex-wrap: wrap; } }
@@ -88,6 +91,15 @@
                         <span th:text="${#temporals.format(comment.createdAt, 'MMM d, yyyy h:mm a')}">date</span>
                     </div>
                     <div class="comment-content" th:text="${comment.content}">Comment</div>
+                    <div class="comment-actions">
+                        <form th:if="${#authorization.expression('hasRole(''ADMIN'')')}" method="post" th:action="@{/posts/{postId}/comments/{commentId}/delete(postId=${post.id}, commentId=${comment.id})}">
+                            <button class="btn btn-secondary" type="submit">Delete</button>
+                        </form>
+                    </div>
+                    <form th:if="${#authorization.expression('hasRole(''ADMIN'')')}" class="comment-edit-form" method="post" th:action="@{/posts/{postId}/comments/{commentId}/edit(postId=${post.id}, commentId=${comment.id})}">
+                        <textarea name="content" required th:text="${comment.content}">Comment</textarea>
+                        <button class="btn btn-secondary" type="submit">Save comment</button>
+                    </form>
                     <form class="reply-form" method="post" th:action="@{/posts/{postId}/comments/{commentId}/replies(postId=${post.id}, commentId=${comment.id})}">
                         <textarea name="content" required placeholder="Reply..."></textarea>
                         <button class="btn btn-secondary" type="submit">Reply</button>
@@ -98,6 +110,15 @@
                             <span th:text="${#temporals.format(reply.createdAt, 'MMM d, yyyy h:mm a')}">date</span>
                         </div>
                         <div class="comment-content" th:text="${reply.content}">Reply</div>
+                        <div class="comment-actions">
+                            <form th:if="${#authorization.expression('hasRole(''ADMIN'')') or comment.author.username == #authentication.name or reply.author.username == #authentication.name}" method="post" th:action="@{/posts/{postId}/comments/{commentId}/delete(postId=${post.id}, commentId=${reply.id})}">
+                                <button class="btn btn-secondary" type="submit">Delete</button>
+                            </form>
+                        </div>
+                        <form th:if="${#authorization.expression('hasRole(''ADMIN'')')}" class="comment-edit-form" method="post" th:action="@{/posts/{postId}/comments/{commentId}/edit(postId=${post.id}, commentId=${reply.id})}">
+                            <textarea name="content" required th:text="${reply.content}">Reply</textarea>
+                            <button class="btn btn-secondary" type="submit">Save reply</button>
+                        </form>
                     </article>
                 </article>
             </div>

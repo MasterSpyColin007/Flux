@@ -19,11 +19,19 @@ body.dark-mode .stat-card,
 body.dark-mode .database-panel,
 body.dark-mode .empty-state,
 body.dark-mode .comment,
-body.dark-mode .comment-form {
+body.dark-mode .comment-form,
+body.dark-mode .reply {
 	background: #111827;
 	border-color: #334155;
 	box-shadow: none;
 	color: #e2e8f0;
+}
+
+body.dark-mode .stat-card,
+body.dark-mode .database-panel,
+body.dark-mode .table-card {
+	background: #0b1220;
+	border: 1px solid #334155;
 }
 
 body.dark-mode h1,
@@ -43,6 +51,12 @@ body.dark-mode .comment-author {
 	color: #f8fafc;
 }
 
+body.dark-mode .stat-card .number,
+body.dark-mode .api-link,
+body.dark-mode th a.sorted {
+	color: #93c5fd;
+}
+
 body.dark-mode p,
 body.dark-mode .subtitle,
 body.dark-mode .post-meta,
@@ -54,6 +68,13 @@ body.dark-mode .db-table span,
 body.dark-mode .empty-state,
 body.dark-mode .comment-meta {
 	color: #cbd5e1;
+}
+
+body.dark-mode .badge-user,
+body.dark-mode .badge-admin,
+body.dark-mode .badge-enabled,
+body.dark-mode .badge-disabled {
+	border: 1px solid #475569;
 }
 
 body.dark-mode input,
@@ -72,6 +93,20 @@ body.dark-mode thead,
 body.dark-mode tr:hover,
 body.dark-mode .db-table {
 	background: #1e293b;
+}
+
+body.dark-mode table {
+	background: #0b1220;
+}
+
+body.dark-mode th,
+body.dark-mode td {
+	border-color: #1f2937;
+}
+
+body.dark-mode .api-link {
+	background: #172554;
+	border-color: #1d4ed8;
 }
 
 body.dark-mode .btn-secondary,

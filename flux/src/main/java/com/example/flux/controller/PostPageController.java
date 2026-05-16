@@ -89,6 +89,35 @@ public class PostPageController {
 		return "redirect:/posts/" + id;
 	}
 
+	@PostMapping("/posts/{id}/comments/{commentId}/edit")
+	public String updateComment(@PathVariable Long id,
+								@PathVariable Long commentId,
+								@RequestParam String content,
+								Authentication authentication,
+								RedirectAttributes redirectAttributes) {
+		try {
+			commentService.updateComment(id, commentId, authentication.getName(), isAdmin(authentication), content);
+			redirectAttributes.addFlashAttribute("success", "Comment updated.");
+		} catch (IllegalArgumentException ex) {
+			redirectAttributes.addFlashAttribute("error", ex.getMessage());
+		}
+		return "redirect:/posts/" + id;
+	}
+
+	@PostMapping("/posts/{id}/comments/{commentId}/delete")
+	public String deleteComment(@PathVariable Long id,
+								@PathVariable Long commentId,
+								Authentication authentication,
+								RedirectAttributes redirectAttributes) {
+		try {
+			commentService.deleteComment(id, commentId, authentication.getName(), isAdmin(authentication));
+			redirectAttributes.addFlashAttribute("success", "Comment deleted.");
+		} catch (IllegalArgumentException ex) {
+			redirectAttributes.addFlashAttribute("error", ex.getMessage());
+		}
+		return "redirect:/posts/" + id;
+	}
+
 	@GetMapping("/posts/{id}/edit")
 	public String showEditForm(@PathVariable Long id, Authentication authentication, Model model,
 							   RedirectAttributes redirectAttributes) {

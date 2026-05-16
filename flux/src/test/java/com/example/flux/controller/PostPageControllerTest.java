@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -186,6 +187,84 @@ class PostPageControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(content().string(containsString("replier")))
 			.andExpect(content().string(containsString("Reply text")));
+	}
+
+	@Test
+	void adminCanEditAndDeleteComments() throws Exception {
+		User author = saveAuthor("admincommentpost", "admincommentpost@example.com");
+		saveAuthor("commentedituser", "commentedituser@example.com");
+		Post post = new Post();
+		post.setAuthor(author);
+		post.setTitle("Admin comment controls");
+		post.setContent("Comment moderation target");
+		postRepository.save(post);
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments")
+				.with(user("commentedituser").roles("USER"))
+				.with(csrf())
+				.param("content", "Needs edit"))
+			.andExpect(status().is3xxRedirection());
+
+		Long commentId = postCommentRepository.findByPostIdAndParentIsNullOrderByCreatedAtAsc(post.getId())
+			.get(0)
+			.getId();
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments/" + commentId + "/edit")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf())
+				.param("content", "Admin edited comment"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/posts/" + post.getId()));
+
+		assertEquals("Admin edited comment", postCommentRepository.findById(commentId).get().getContent());
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments/" + commentId + "/delete")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/posts/" + post.getId()));
+
+		assertTrue(postCommentRepository.findById(commentId).isEmpty());
+	}
+
+	@Test
+	void commentAuthorCanDeleteRepliesToTheirComment() throws Exception {
+		User author = saveAuthor("replydeletepost", "replydeletepost@example.com");
+		saveAuthor("parentcommenter", "parentcommenter@example.com");
+		saveAuthor("replydeleteuser", "replydeleteuser@example.com");
+		Post post = new Post();
+		post.setAuthor(author);
+		post.setTitle("Reply delete controls");
+		post.setContent("Reply delete target");
+		postRepository.save(post);
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments")
+				.with(user("parentcommenter").roles("USER"))
+				.with(csrf())
+				.param("content", "Parent comment"))
+			.andExpect(status().is3xxRedirection());
+
+		Long commentId = postCommentRepository.findByPostIdAndParentIsNullOrderByCreatedAtAsc(post.getId())
+			.get(0)
+			.getId();
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments/" + commentId + "/replies")
+				.with(user("replydeleteuser").roles("USER"))
+				.with(csrf())
+				.param("content", "Reply to delete"))
+			.andExpect(status().is3xxRedirection());
+
+		Long replyId = postCommentRepository.findByParentIdOrderByCreatedAtAsc(commentId)
+			.get(0)
+			.getId();
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/comments/" + replyId + "/delete")
+				.with(user("parentcommenter").roles("USER"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/posts/" + post.getId()));
+
+		assertTrue(postCommentRepository.findById(replyId).isEmpty());
 	}
 
 	private User saveAuthor(String username, String email) {
