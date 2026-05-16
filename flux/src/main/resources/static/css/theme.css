@@ -1,0 +1,96 @@
+body.dark-mode {
+	background: #0f172a;
+	color: #e2e8f0;
+}
+
+body.dark-mode nav {
+	background: #020617;
+}
+
+body.dark-mode .card,
+body.dark-mode .login-card,
+body.dark-mode .register-card,
+body.dark-mode .post,
+body.dark-mode .post-card,
+body.dark-mode .form-panel,
+body.dark-mode .panel,
+body.dark-mode .table-card,
+body.dark-mode .stat-card,
+body.dark-mode .database-panel,
+body.dark-mode .empty-state,
+body.dark-mode .comment,
+body.dark-mode .comment-form {
+	background: #111827;
+	border-color: #334155;
+	box-shadow: none;
+	color: #e2e8f0;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode .post-title,
+body.dark-mode .post-content,
+body.dark-mode .post-author,
+body.dark-mode label,
+body.dark-mode th,
+body.dark-mode td,
+body.dark-mode .post-title,
+body.dark-mode .post-title span,
+body.dark-mode .db-table strong,
+body.dark-mode .toolbar h2,
+body.dark-mode .page-header h1,
+body.dark-mode .comment-author {
+	color: #f8fafc;
+}
+
+body.dark-mode p,
+body.dark-mode .subtitle,
+body.dark-mode .post-meta,
+body.dark-mode .register-link,
+body.dark-mode .login-link,
+body.dark-mode .page-header p,
+body.dark-mode .panel-heading span,
+body.dark-mode .db-table span,
+body.dark-mode .empty-state,
+body.dark-mode .comment-meta {
+	color: #cbd5e1;
+}
+
+body.dark-mode input,
+body.dark-mode textarea {
+	background: #020617;
+	border-color: #475569;
+	color: #f8fafc;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+	color: #94a3b8;
+}
+
+body.dark-mode thead,
+body.dark-mode tr:hover,
+body.dark-mode .db-table {
+	background: #1e293b;
+}
+
+body.dark-mode .btn-secondary,
+body.dark-mode .filter-btn {
+	background: #334155;
+	border-color: #475569;
+	color: #f8fafc;
+}
+
+body.dark-mode .btn-secondary:hover,
+body.dark-mode .filter-btn:hover {
+	background: #475569;
+	color: #fff;
+}
+
+.theme-toggle {
+	display: inline;
+}
+
+.theme-toggle button {
+	white-space: nowrap;
+}

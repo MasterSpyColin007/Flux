@@ -2,9 +2,11 @@ package com.example.flux.service;
 
 import com.example.flux.model.Post;
 import com.example.flux.model.User;
+import com.example.flux.repository.PostCommentRepository;
 import com.example.flux.repository.PostRepository;
 import com.example.flux.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,10 +17,13 @@ public class PostService {
 
 	private final PostRepository postRepository;
 	private final UserRepository userRepository;
+	private final PostCommentRepository commentRepository;
 
-	public PostService(PostRepository postRepository, UserRepository userRepository) {
+	public PostService(PostRepository postRepository, UserRepository userRepository,
+					   PostCommentRepository commentRepository) {
 		this.postRepository = postRepository;
 		this.userRepository = userRepository;
+		this.commentRepository = commentRepository;
 	}
 
 	public Post createPost(String authorIdentifier, String title, String content, String imageUrl) {
@@ -74,14 +79,17 @@ public class PostService {
 		return postRepository.save(post);
 	}
 
+	@Transactional
 	public void deletePost(Long postId, String authorIdentifier) {
 		deletePost(postId, authorIdentifier, false);
 	}
 
+	@Transactional
 	public void deletePost(Long postId, String actorIdentifier, boolean canModerate) {
 		Post post = getPostById(postId);
 		User actor = findUser(actorIdentifier);
 		ensureCanManage(post, actor, canModerate);
+		commentRepository.deleteByPostId(postId);
 		postRepository.delete(post);
 	}
 

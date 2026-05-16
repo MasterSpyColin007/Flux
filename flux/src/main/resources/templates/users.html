@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flux - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -226,13 +227,16 @@
         }
     </style>
 </head>
-<body>
+<body th:classappend="${darkMode} ? 'dark-mode' : ''">
     <nav>
         <span class="brand">Flux</span>
         <div class="nav-links">
             <a th:href="@{/}">Home</a>
             <a th:href="@{/users}" class="active">Admin</a>
             <span class="user-info">Signed in as <strong sec:authentication="name">user</strong></span>
+            <form class="theme-toggle" th:action="@{/theme/toggle}" method="post">
+                <button type="submit" th:text="${darkMode} ? 'Light mode' : 'Dark mode'">Dark mode</button>
+            </form>
             <form th:action="@{/logout}" method="post">
                 <button type="submit">Sign out</button>
             </form>

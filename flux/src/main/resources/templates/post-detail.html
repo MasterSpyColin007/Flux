@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="'Flux - ' + ${post.title}">Flux - Post</title>
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
@@ -29,16 +30,29 @@
         .alert { padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.875rem; }
         .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .comments { margin-top: 1.25rem; }
+        .comments h2 { font-size: 1.2rem; color: #1e293b; margin-bottom: 0.75rem; }
+        .comment-form { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .comment-form textarea { width: 100%; min-height: 84px; resize: vertical; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.65rem; font: inherit; margin-bottom: 0.5rem; }
+        .comment-list { display: grid; gap: 0.75rem; }
+        .comment { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.9rem; }
+        .comment.reply { margin-left: 1.5rem; background: #f8fafc; }
+        .comment-meta { color: #64748b; font-size: 0.8rem; margin-bottom: 0.35rem; }
+        .comment-author { color: #1e293b; font-weight: 700; }
+        .comment-content { white-space: pre-wrap; line-height: 1.5; margin-bottom: 0.5rem; }
+        .reply-form { margin-top: 0.5rem; }
+        .reply-form textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.55rem; font: inherit; margin-bottom: 0.5rem; }
         @media (max-width: 700px) { nav { align-items: flex-start; flex-direction: column; gap: 0.75rem; } nav .nav-links { flex-wrap: wrap; } }
     </style>
 </head>
-<body>
+<body th:classappend="${darkMode} ? 'dark-mode' : ''">
     <nav>
         <span class="brand">Flux</span>
         <div class="nav-links">
             <a th:href="@{/}">Home</a>
             <a th:href="@{/posts}" class="active">Posts</a>
             <a th:href="@{/users}" sec:authorize="hasRole('ADMIN')">Admin</a>
+            <form class="theme-toggle" th:action="@{/theme/toggle}" method="post"><button type="submit" th:text="${darkMode} ? 'Light mode' : 'Dark mode'">Dark mode</button></form>
             <form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form>
         </div>
     </nav>
@@ -49,7 +63,7 @@
             <img th:if="${post.imageUrl}" class="post-media" th:src="${post.imageUrl}" alt="Post image">
             <div class="post-body">
                 <div class="post-meta">
-                    <span th:text="${post.author.username}">author</span>
+                    <span>Originally posted by <strong class="post-author" th:text="${post.author.username}">author</strong></span>
                     <span th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy h:mm a')}">date</span>
                 </div>
                 <h1 th:text="${post.title}">Post title</h1>
@@ -61,6 +75,34 @@
                 </div>
             </div>
         </article>
+        <section class="comments">
+            <h2>Comments</h2>
+            <form class="comment-form" method="post" th:action="@{/posts/{id}/comments(id=${post.id})}">
+                <textarea name="content" required placeholder="Add a comment..."></textarea>
+                <button class="btn" type="submit">Comment</button>
+            </form>
+            <div class="comment-list" th:if="${!comments.isEmpty()}">
+                <article class="comment" th:each="comment : ${comments}">
+                    <div class="comment-meta">
+                        <span class="comment-author" th:text="${comment.author.username}">account</span>
+                        <span th:text="${#temporals.format(comment.createdAt, 'MMM d, yyyy h:mm a')}">date</span>
+                    </div>
+                    <div class="comment-content" th:text="${comment.content}">Comment</div>
+                    <form class="reply-form" method="post" th:action="@{/posts/{postId}/comments/{commentId}/replies(postId=${post.id}, commentId=${comment.id})}">
+                        <textarea name="content" required placeholder="Reply..."></textarea>
+                        <button class="btn btn-secondary" type="submit">Reply</button>
+                    </form>
+                    <article class="comment reply" th:each="reply : ${comment.replies}">
+                        <div class="comment-meta">
+                            <span class="comment-author" th:text="${reply.author.username}">account</span>
+                            <span th:text="${#temporals.format(reply.createdAt, 'MMM d, yyyy h:mm a')}">date</span>
+                        </div>
+                        <div class="comment-content" th:text="${reply.content}">Reply</div>
+                    </article>
+                </article>
+            </div>
+            <div th:if="${comments.isEmpty()}" class="empty-state">No comments yet.</div>
+        </section>
     </main>
 </body>
 </html>

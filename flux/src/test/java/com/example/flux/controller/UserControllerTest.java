@@ -175,6 +175,24 @@ class UserControllerTest {
 	}
 
 	@Test
+	void userCanTogglePersistentDarkMode() throws Exception {
+		User target = userRepository.save(new User("darkmodetest", passwordEncoder.encode("pass123"), "ROLE_USER"));
+
+		mockMvc.perform(post("/theme/toggle")
+				.with(user("darkmodetest").roles("USER"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection());
+
+		assertTrue(userRepository.findById(target.getId()).get().isDarkMode());
+
+		mockMvc.perform(get("/posts").with(user("darkmodetest").roles("USER")))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("dark-mode")));
+
+		userRepository.delete(target);
+	}
+
+	@Test
 	void adminCannotDeactivateSelf() throws Exception {
 		mockMvc.perform(post("/users/1/toggle-enabled")
 				.with(user("admin").roles("ADMIN"))

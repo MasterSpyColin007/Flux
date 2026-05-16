@@ -1,6 +1,7 @@
 package com.example.flux.controller;
 
 import com.example.flux.model.Post;
+import com.example.flux.service.PostCommentService;
 import com.example.flux.service.PostService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,9 +17,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class PostPageController {
 
 	private final PostService postService;
+	private final PostCommentService commentService;
 
-	public PostPageController(PostService postService) {
+	public PostPageController(PostService postService, PostCommentService commentService) {
 		this.postService = postService;
+		this.commentService = commentService;
 	}
 
 	@GetMapping("/posts")
@@ -53,7 +56,37 @@ public class PostPageController {
 	@GetMapping("/posts/{id}")
 	public String viewPost(@PathVariable Long id, Model model) {
 		model.addAttribute("post", postService.getPostById(id));
+		model.addAttribute("comments", commentService.getCommentsForPost(id));
 		return "post-detail";
+	}
+
+	@PostMapping("/posts/{id}/comments")
+	public String addComment(@PathVariable Long id,
+							 @RequestParam String content,
+							 Authentication authentication,
+							 RedirectAttributes redirectAttributes) {
+		try {
+			commentService.addComment(id, authentication.getName(), content);
+			redirectAttributes.addFlashAttribute("success", "Comment added.");
+		} catch (IllegalArgumentException ex) {
+			redirectAttributes.addFlashAttribute("error", ex.getMessage());
+		}
+		return "redirect:/posts/" + id;
+	}
+
+	@PostMapping("/posts/{id}/comments/{commentId}/replies")
+	public String addReply(@PathVariable Long id,
+						   @PathVariable Long commentId,
+						   @RequestParam String content,
+						   Authentication authentication,
+						   RedirectAttributes redirectAttributes) {
+		try {
+			commentService.addReply(id, commentId, authentication.getName(), content);
+			redirectAttributes.addFlashAttribute("success", "Reply added.");
+		} catch (IllegalArgumentException ex) {
+			redirectAttributes.addFlashAttribute("error", ex.getMessage());
+		}
+		return "redirect:/posts/" + id;
 	}
 
 	@GetMapping("/posts/{id}/edit")
