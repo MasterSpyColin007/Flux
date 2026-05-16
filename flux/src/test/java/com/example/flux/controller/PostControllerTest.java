@@ -18,8 +18,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -125,6 +127,41 @@ class PostControllerTest {
 			.andExpect(jsonPath("$.error").value("Image URL must be an externally hosted http or https URL."));
 	}
 
+	@Test
+	void adminCanUpdateAnotherUsersPost() throws Exception {
+		User author = saveAuthor("apiownedpost", "apiownedpost@example.com");
+		Post post = savePost(author, "Needs moderation", "Original content");
+
+		mockMvc.perform(put("/api/posts/" + post.getId())
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf())
+				.contentType("application/json")
+				.content("""
+					{
+					  "title": "Moderated title",
+					  "content": "Moderated content"
+					}
+					"""))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.title").value("Moderated title"));
+
+		assertEquals("Moderated content", postRepository.findById(post.getId()).get().getContent());
+	}
+
+	@Test
+	void adminCanDeleteAnotherUsersPost() throws Exception {
+		User author = saveAuthor("apideletepost", "apideletepost@example.com");
+		Post post = savePost(author, "Remove me", "Needs removal");
+
+		mockMvc.perform(delete("/api/posts/" + post.getId())
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.message").value("Post deleted."));
+
+		assertTrue(postRepository.findById(post.getId()).isEmpty());
+	}
+
 	private User saveAuthor(String username, String email) {
 		return userRepository.findByUsername(username)
 			.orElseGet(() -> {
@@ -132,5 +169,13 @@ class PostControllerTest {
 				user.setEmail(email);
 				return userRepository.save(user);
 			});
+	}
+
+	private Post savePost(User author, String title, String content) {
+		Post post = new Post();
+		post.setAuthor(author);
+		post.setTitle(title);
+		post.setContent(content);
+		return postRepository.save(post);
 	}
 }

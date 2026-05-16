@@ -109,6 +109,39 @@ class PostPageControllerTest {
 		assertFalse(postRepository.findById(post.getId()).isPresent());
 	}
 
+	@Test
+	void adminCanEditAndDeleteAnotherUsersPost() throws Exception {
+		User author = saveAuthor("moderateduser", "moderateduser@example.com");
+		Post post = new Post();
+		post.setAuthor(author);
+		post.setTitle("Needs admin");
+		post.setContent("Original content");
+		postRepository.save(post);
+
+		mockMvc.perform(get("/posts/" + post.getId() + "/edit").with(user("admin").roles("ADMIN")))
+			.andExpect(status().isOk())
+			.andExpect(view().name("post-form"))
+			.andExpect(content().string(containsString("Edit Post")));
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/edit")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf())
+				.param("title", "Admin updated")
+				.param("content", "Admin moderated content"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrlPattern("/posts/*"));
+
+		assertEquals("Admin updated", postRepository.findById(post.getId()).get().getTitle());
+
+		mockMvc.perform(post("/posts/" + post.getId() + "/delete")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/posts"));
+
+		assertFalse(postRepository.findById(post.getId()).isPresent());
+	}
+
 	private User saveAuthor(String username, String email) {
 		return userRepository.findByUsername(username)
 			.orElseGet(() -> {

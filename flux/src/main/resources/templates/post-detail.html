@@ -56,8 +56,8 @@
                 <div class="post-content" th:text="${post.content}">Post content</div>
                 <div class="actions">
                     <a class="btn btn-secondary" th:href="@{/posts}">Back</a>
-                    <a class="btn" th:href="@{/posts/{id}/edit(id=${post.id})}" th:if="${post.author.username == #authentication.name}">Edit</a>
-                    <a class="btn btn-secondary" th:href="@{/posts/{id}/delete(id=${post.id})}" th:if="${post.author.username == #authentication.name}">Delete</a>
+                    <a class="btn" th:href="@{/posts/{id}/edit(id=${post.id})}" th:if="${post.author.username == #authentication.name or #authorization.expression('hasRole(''ADMIN'')')}">Edit</a>
+                    <a class="btn btn-secondary" th:href="@{/posts/{id}/delete(id=${post.id})}" th:if="${post.author.username == #authentication.name or #authorization.expression('hasRole(''ADMIN'')')}">Delete</a>
                 </div>
             </div>
         </article>
