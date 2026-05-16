@@ -30,7 +30,7 @@ public class Post {
 	@Column(name = "image_url")
 	private String imageUrl;
 
-	@Column(nullable = false)
+	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
 	@ManyToOne(optional = false)

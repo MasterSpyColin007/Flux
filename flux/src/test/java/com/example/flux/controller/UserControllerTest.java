@@ -14,6 +14,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -177,6 +178,27 @@ class UserControllerTest {
 				.with(csrf()))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(flash().attribute("error", "At least one admin account must remain."));
+
+		assertTrue(userRepository.findById(target.getId()).isPresent());
+	}
+
+	@Test
+	@Transactional
+	void apiCannotDeleteLastAdmin() throws Exception {
+		User target = userRepository.save(new User("lastadminapi", passwordEncoder.encode("pass123"), "ROLE_ADMIN"));
+		userRepository.findAll().stream()
+			.filter(user -> !user.getId().equals(target.getId()))
+			.filter(user -> "ROLE_ADMIN".equals(user.getRole()))
+			.forEach(user -> {
+				user.setRole("ROLE_USER");
+				userRepository.save(user);
+			});
+
+		mockMvc.perform(delete("/api/users/" + target.getId())
+				.with(user("outsideadmin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("At least one admin account must remain."));
 
 		assertTrue(userRepository.findById(target.getId()).isPresent());
 	}

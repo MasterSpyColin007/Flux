@@ -58,6 +58,10 @@ public class UserService {
 	}
 
 	public void deleteUser(Long id) {
-		userRepository.delete(getUserById(id));
+		User user = getUserById(id);
+		if ("ROLE_ADMIN".equals(user.getRole()) && userRepository.countByRole("ROLE_ADMIN") <= 1) {
+			throw new IllegalArgumentException("At least one admin account must remain.");
+		}
+		userRepository.delete(user);
 	}
 }
