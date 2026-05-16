@@ -4,6 +4,8 @@ import com.example.flux.model.User;
 import com.example.flux.repository.UserRepository;
 import com.example.flux.service.DatabaseExplorerService;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,10 +25,13 @@ public class UserController {
 
 	private final UserRepository userRepository;
 	private final DatabaseExplorerService databaseExplorerService;
+	private final SessionRegistry sessionRegistry;
 
-	public UserController(UserRepository userRepository, DatabaseExplorerService databaseExplorerService) {
+	public UserController(UserRepository userRepository, DatabaseExplorerService databaseExplorerService,
+						  SessionRegistry sessionRegistry) {
 		this.userRepository = userRepository;
 		this.databaseExplorerService = databaseExplorerService;
+		this.sessionRegistry = sessionRegistry;
 	}
 
 	@GetMapping("/users")
@@ -80,12 +85,13 @@ public class UserController {
 				return "redirect:/users";
 			}
 			user.setRole("ROLE_USER");
-			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is no longer an admin.");
+			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is no longer an admin and will be asked to sign back in.");
 		} else {
 			user.setRole("ROLE_ADMIN");
-			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is now an admin.");
+			redirectAttributes.addFlashAttribute("success", user.getUsername() + " is now an admin and will be asked to sign back in.");
 		}
 		userRepository.save(user);
+		expireSessionsFor(user.getUsername());
 
 		return "redirect:/users";
 	}
@@ -109,8 +115,23 @@ public class UserController {
 		}
 
 		userRepository.delete(user);
+		expireSessionsFor(user.getUsername());
 		redirectAttributes.addFlashAttribute("success", user.getUsername() + " has been removed.");
 
 		return "redirect:/users";
+	}
+
+	private void expireSessionsFor(String username) {
+		sessionRegistry.getAllPrincipals().stream()
+			.filter(principal -> username.equals(usernameOf(principal)))
+			.flatMap(principal -> sessionRegistry.getAllSessions(principal, false).stream())
+			.forEach(sessionInformation -> sessionInformation.expireNow());
+	}
+
+	private String usernameOf(Object principal) {
+		if (principal instanceof UserDetails userDetails) {
+			return userDetails.getUsername();
+		}
+		return principal == null ? null : principal.toString();
 	}
 }
