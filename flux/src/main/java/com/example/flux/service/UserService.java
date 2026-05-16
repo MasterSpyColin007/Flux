@@ -10,6 +10,8 @@ import java.util.List;
 @Service
 public class UserService {
 
+	private static final long PROTECTED_USER_ID = 9L;
+
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
@@ -59,6 +61,9 @@ public class UserService {
 
 	public void deleteUser(Long id) {
 		User user = getUserById(id);
+		if (PROTECTED_USER_ID == id) {
+			throw new IllegalArgumentException("User ID 9 cannot be deleted.");
+		}
 		if ("ROLE_ADMIN".equals(user.getRole()) && userRepository.countByRole("ROLE_ADMIN") <= 1) {
 			throw new IllegalArgumentException("At least one admin account must remain.");
 		}

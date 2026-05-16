@@ -356,7 +356,7 @@
                                             th:class="${user.enabled} ? 'btn-sm btn-demote' : 'btn-sm btn-promote'"
                                             th:text="${user.enabled} ? 'Deactivate' : 'Reactivate'">Toggle Active</button>
                                 </form>
-                                <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post"
+                                <form th:if="${user.id != 9}" th:action="@{/users/{id}/delete(id=${user.id})}" method="post"
                                       onsubmit="return confirm('Are you sure you want to remove this user?');">
                                     <button type="submit" class="btn-sm btn-delete">Remove</button>
                                 </form>

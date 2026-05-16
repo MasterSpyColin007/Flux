@@ -21,6 +21,7 @@ import java.util.Set;
 @Controller
 public class UserController {
 
+	private static final long PROTECTED_USER_ID = 9L;
 	private static final Set<String> ALLOWED_SORTS = Set.of("id", "username", "role", "enabled");
 
 	private final UserRepository userRepository;
@@ -138,6 +139,11 @@ public class UserController {
 
 		if (user.getUsername().equals(principal.getName())) {
 			redirectAttributes.addFlashAttribute("error", "You cannot delete your own account.");
+			return "redirect:/users";
+		}
+
+		if (PROTECTED_USER_ID == id) {
+			redirectAttributes.addFlashAttribute("error", "User ID 9 cannot be deleted.");
 			return "redirect:/users";
 		}
 

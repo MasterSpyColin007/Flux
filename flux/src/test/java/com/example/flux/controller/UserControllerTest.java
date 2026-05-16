@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,9 @@ class UserControllerTest {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	@Test
 	void usersPageRequiresAuth() throws Exception {
@@ -129,6 +133,21 @@ class UserControllerTest {
 			.andExpect(redirectedUrl("/users"));
 
 		assertFalse(userRepository.findById(id).isPresent());
+	}
+
+	@Test
+	@Transactional
+	void adminCannotDeleteProtectedUserIdNine() throws Exception {
+		saveProtectedUserNine();
+
+		mockMvc.perform(post("/users/9/delete")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/users"))
+			.andExpect(flash().attribute("error", "User ID 9 cannot be deleted."));
+
+		assertTrue(userRepository.findById(9L).isPresent());
 	}
 
 	@Test
@@ -238,6 +257,20 @@ class UserControllerTest {
 
 	@Test
 	@Transactional
+	void apiCannotDeleteProtectedUserIdNine() throws Exception {
+		saveProtectedUserNine();
+
+		mockMvc.perform(delete("/api/users/9")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.error").value("User ID 9 cannot be deleted."));
+
+		assertTrue(userRepository.findById(9L).isPresent());
+	}
+
+	@Test
+	@Transactional
 	void cannotDeactivateLastActiveAdmin() throws Exception {
 		User target = userRepository.save(new User("lastactiveadmin", passwordEncoder.encode("pass123"), "ROLE_ADMIN"));
 		userRepository.findAll().stream()
@@ -300,5 +333,12 @@ class UserControllerTest {
 		mockMvc.perform(get("/api/database/tables/not_a_table").with(user("admin").roles("ADMIN")))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.error").value("Unknown database table: not_a_table"));
+	}
+
+	private void saveProtectedUserNine() {
+		jdbcTemplate.update("""
+			MERGE INTO users (id, username, password, enabled, role) KEY (id)
+			VALUES (9, 'protected9', ?, true, 'ROLE_USER')
+			""", passwordEncoder.encode("pass123"));
 	}
 }
