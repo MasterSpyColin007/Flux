@@ -132,6 +132,39 @@ class UserControllerTest {
 	}
 
 	@Test
+	void adminCanDeactivateAndReactivateUser() throws Exception {
+		User target = userRepository.save(new User("deactivatetest", passwordEncoder.encode("pass123"), "ROLE_USER"));
+
+		mockMvc.perform(post("/users/" + target.getId() + "/toggle-enabled")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/users"))
+			.andExpect(flash().attribute("success", "deactivatetest has been deactivated."));
+
+		assertFalse(userRepository.findById(target.getId()).get().isEnabled());
+
+		mockMvc.perform(post("/users/" + target.getId() + "/toggle-enabled")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/users"))
+			.andExpect(flash().attribute("success", "deactivatetest has been reactivated."));
+
+		assertTrue(userRepository.findById(target.getId()).get().isEnabled());
+		userRepository.delete(target);
+	}
+
+	@Test
+	void adminCannotDeactivateSelf() throws Exception {
+		mockMvc.perform(post("/users/1/toggle-enabled")
+				.with(user("admin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(flash().attribute("error", "You cannot deactivate your own account."));
+	}
+
+	@Test
 	void adminCannotDeleteSelf() throws Exception {
 		mockMvc.perform(post("/users/1/toggle-admin")
 				.with(user("admin").roles("ADMIN"))
@@ -204,6 +237,27 @@ class UserControllerTest {
 	}
 
 	@Test
+	@Transactional
+	void cannotDeactivateLastActiveAdmin() throws Exception {
+		User target = userRepository.save(new User("lastactiveadmin", passwordEncoder.encode("pass123"), "ROLE_ADMIN"));
+		userRepository.findAll().stream()
+			.filter(user -> !user.getId().equals(target.getId()))
+			.filter(user -> "ROLE_ADMIN".equals(user.getRole()))
+			.forEach(user -> {
+				user.setEnabled(false);
+				userRepository.save(user);
+			});
+
+		mockMvc.perform(post("/users/" + target.getId() + "/toggle-enabled")
+				.with(user("outsideadmin").roles("ADMIN"))
+				.with(csrf()))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(flash().attribute("error", "At least one active admin account must remain."));
+
+		assertTrue(userRepository.findById(target.getId()).get().isEnabled());
+	}
+
+	@Test
 	void regularUserCannotAccessAdminActions() throws Exception {
 		mockMvc.perform(post("/users/1/toggle-admin")
 				.with(user("regularuser").roles("USER"))
@@ -211,6 +265,11 @@ class UserControllerTest {
 			.andExpect(status().isForbidden());
 
 		mockMvc.perform(post("/users/1/delete")
+				.with(user("regularuser").roles("USER"))
+				.with(csrf()))
+			.andExpect(status().isForbidden());
+
+		mockMvc.perform(post("/users/1/toggle-enabled")
 				.with(user("regularuser").roles("USER"))
 				.with(csrf()))
 			.andExpect(status().isForbidden());

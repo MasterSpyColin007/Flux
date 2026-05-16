@@ -96,6 +96,38 @@ public class UserController {
 		return "redirect:/users";
 	}
 
+	@PostMapping("/users/{id}/toggle-enabled")
+	public String toggleEnabled(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
+		User user = userRepository.findById(id).orElse(null);
+		if (user == null) {
+			redirectAttributes.addFlashAttribute("error", "User not found.");
+			return "redirect:/users";
+		}
+
+		if (user.getUsername().equals(principal.getName())) {
+			redirectAttributes.addFlashAttribute("error", "You cannot deactivate your own account.");
+			return "redirect:/users";
+		}
+
+		if (user.isEnabled() && "ROLE_ADMIN".equals(user.getRole())
+				&& userRepository.countByRoleAndEnabled("ROLE_ADMIN", true) <= 1) {
+			redirectAttributes.addFlashAttribute("error", "At least one active admin account must remain.");
+			return "redirect:/users";
+		}
+
+		user.setEnabled(!user.isEnabled());
+		userRepository.save(user);
+
+		if (user.isEnabled()) {
+			redirectAttributes.addFlashAttribute("success", user.getUsername() + " has been reactivated.");
+		} else {
+			expireSessionsFor(user.getUsername());
+			redirectAttributes.addFlashAttribute("success", user.getUsername() + " has been deactivated.");
+		}
+
+		return "redirect:/users";
+	}
+
 	@PostMapping("/users/{id}/delete")
 	public String deleteUser(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
 		User user = userRepository.findById(id).orElse(null);

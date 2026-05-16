@@ -36,6 +36,13 @@ public class PostService {
 			.orElseThrow(() -> new IllegalArgumentException("Post not found."));
 	}
 
+	public Post getManageablePost(Long postId, String actorIdentifier, boolean canModerate) {
+		Post post = getPostById(postId);
+		User actor = findUser(actorIdentifier);
+		ensureCanManage(post, actor, canModerate);
+		return post;
+	}
+
 	public List<Post> getAllPosts() {
 		return postRepository.findAllByOrderByCreatedAtDesc();
 	}
@@ -45,9 +52,14 @@ public class PostService {
 	}
 
 	public Post updatePost(Long postId, String authorIdentifier, String title, String content, String imageUrl) {
+		return updatePost(postId, authorIdentifier, title, content, imageUrl, false);
+	}
+
+	public Post updatePost(Long postId, String actorIdentifier, String title, String content, String imageUrl,
+						   boolean canModerate) {
 		Post post = getPostById(postId);
-		User author = findUser(authorIdentifier);
-		ensureAuthor(post, author);
+		User actor = findUser(actorIdentifier);
+		ensureCanManage(post, actor, canModerate);
 
 		if (title != null && !title.isBlank()) {
 			post.setTitle(title.trim());
@@ -63,9 +75,13 @@ public class PostService {
 	}
 
 	public void deletePost(Long postId, String authorIdentifier) {
+		deletePost(postId, authorIdentifier, false);
+	}
+
+	public void deletePost(Long postId, String actorIdentifier, boolean canModerate) {
 		Post post = getPostById(postId);
-		User author = findUser(authorIdentifier);
-		ensureAuthor(post, author);
+		User actor = findUser(actorIdentifier);
+		ensureCanManage(post, actor, canModerate);
 		postRepository.delete(post);
 	}
 
@@ -79,8 +95,11 @@ public class PostService {
 			.orElseThrow(() -> new IllegalArgumentException("User not found."));
 	}
 
-	private void ensureAuthor(Post post, User author) {
-		if (!post.getAuthor().getId().equals(author.getId())) {
+	private void ensureCanManage(Post post, User actor, boolean canModerate) {
+		if (canModerate && "ROLE_ADMIN".equals(actor.getRole())) {
+			return;
+		}
+		if (!post.getAuthor().getId().equals(actor.getId())) {
 			throw new IllegalArgumentException("Only the post author can change this post.");
 		}
 	}

@@ -3,6 +3,8 @@ package com.example.flux.controller;
 import com.example.flux.model.Post;
 import com.example.flux.service.PostService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -60,14 +62,17 @@ public class PostController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<?> updatePost(@PathVariable Long id, @RequestBody Map<String, String> body) {
+	public ResponseEntity<?> updatePost(@PathVariable Long id, @RequestBody Map<String, String> body,
+										Authentication authentication) {
 		try {
+			boolean admin = isAdmin(authentication);
 			Post post = postService.updatePost(
 				id,
-				body.get("author"),
+				admin ? authentication.getName() : body == null ? null : body.get("author"),
 				body.get("title"),
 				body.get("content"),
-				body.get("imageUrl")
+				body.get("imageUrl"),
+				admin
 			);
 			return ResponseEntity.ok(post);
 		} catch (IllegalArgumentException ex) {
@@ -76,12 +81,21 @@ public class PostController {
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deletePost(@PathVariable Long id, @RequestBody Map<String, String> body) {
+	public ResponseEntity<?> deletePost(@PathVariable Long id,
+										@RequestBody(required = false) Map<String, String> body,
+										Authentication authentication) {
 		try {
-			postService.deletePost(id, body.get("author"));
+			boolean admin = isAdmin(authentication);
+			postService.deletePost(id, admin ? authentication.getName() : body == null ? null : body.get("author"), admin);
 			return ResponseEntity.ok(Map.of("message", "Post deleted."));
 		} catch (IllegalArgumentException ex) {
 			return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
 		}
+	}
+
+	private boolean isAdmin(Authentication authentication) {
+		return authentication.getAuthorities().stream()
+			.map(GrantedAuthority::getAuthority)
+			.anyMatch("ROLE_ADMIN"::equals);
 	}
 }
